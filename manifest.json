@@ -42,5 +42,6 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "description": "Simple HTML Clock"
 }
