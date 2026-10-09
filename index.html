@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ohmika — projects & pages</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --link: #58a6ff;
+      --accent: #39d353;
+      --accent-warn: #d29922;
+      --border: #30363d;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      letter-spacing: -0.04em;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 32px;
+      font-size: 1.05rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+      align-items: center;
+    }
+
+    .search {
+      flex: 1;
+      min-width: 240px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      transition: border-color 0.15s ease;
+    }
+
+    .search:focus {
+      outline: none;
+      border-color: var(--link);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(57, 211, 83, 0.08);
+      border: 1px solid rgba(57, 211, 83, 0.3);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .category {
+      margin-bottom: 48px;
+    }
+
+    .category-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+      color: var(--text);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: linear-gradient(135deg, var(--panel) 0%, #1a1f2e 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--link);
+      box-shadow: 0 8px 24px rgba(88, 166, 255, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .name {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .name a {
+      color: var(--link);
+      text-decoration: none;
+    }
+
+    .name a:hover {
+      text-decoration: underline;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: rgba(88, 166, 255, 0.12);
+      color: var(--link);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    .badge.live {
+      background: rgba(57, 211, 83, 0.12);
+      color: var(--accent);
+    }
+
+    .badge.offline {
+      background: rgba(210, 153, 34, 0.12);
+      color: var(--accent-warn);
+    }
+
+    .description {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      flex-grow: 1;
+      line-height: 1.5;
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      background: rgba(88, 166, 255, 0.12);
+      color: var(--link);
+      border-color: rgba(88, 166, 255, 0.35);
+    }
+
+    .btn.primary:hover {
+      background: rgba(88, 166, 255, 0.2);
+      border-color: var(--link);
+    }
+
+    .btn.secondary {
+      background: rgba(57, 211, 83, 0.08);
+      color: var(--accent);
+      border-color: rgba(57, 211, 83, 0.3);
+    }
+
+    .btn.secondary:hover {
+      background: rgba(57, 211, 83, 0.15);
+      border-color: var(--accent);
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 24px 0;
+      font-size: 1rem;
+    }
+
+    .loading {
+      color: var(--muted);
+      font-size: 1rem;
+      padding: 24px 0;
+    }
+
+    .error {
+      background: rgba(248, 81, 73, 0.08);
+      border: 1px solid rgba(248, 81, 73, 0.3);
+      color: #f8514a;
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .no-pages {
+      background: rgba(210, 153, 34, 0.08);
+      border: 1px solid rgba(210, 153, 34, 0.3);
+      color: var(--accent-warn);
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>ohmika</h1>
+    <div class="subtitle">Projects with live GitHub Pages deployments</div>
+
+    <div class="controls">
+      <input id="search" class="search" type="text" placeholder="Zoeken in projecten..." />
+      <div class="status-badge">
+        <span id="count">—</span> projects
+      </div>
+    </div>
+
+    <div id="error" class="error hidden"></div>
+    <div id="noPages" class="no-pages hidden"></div>
+    <div id="loading" class="loading">Laden...</div>
+    <div id="content"></div>
+  </div>
+
+  <script>
+    const user = "ohmika";
+    const contentEl = document.getElementById("content");
+    const loadingEl = document.getElementById("loading");
+    const errorEl = document.getElementById("error");
+    const noPagesEl = document.getElementById("noPages");
+    const searchEl = document.getElementById("search");
+    const countEl = document.getElementById("count");
+
+    // Categorisering op basis van repo-naam
+    const categories = {
+      "Converters & Encoders": ["64toimg", "base64", "imgto64", "imagecompress"],
+      "Utilities": ["cleanlink", "urlopener", "uri", "shortcutdecoder", "eject", "ejectlite"],
+      "Tools": ["clock", "html", "mp3", "soundboard", "squeeze", "squeezecode"],
+      "Specialty": ["gdrive", "rdw", "ip"],
+      "Media & Visual": ["space", "videofix"],
+      "Misc": ["bookmarklet", "pulse", "temp", "tempapp"]
+    };
+
+    function getCategoryForRepo(repoName) {
+      for (const [category, repos] of Object.entries(categories)) {
+        if (repos.includes(repoName)) return category;
+      }
+      return "Other";
+    }
+
+    async function checkHasPages(owner, repo) {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`);
+        if (res.status === 200) return true;
+
+        const res2 = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/docs`);
+        if (res2.status === 200) return true;
+
+        return false;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function buildProjectCard(repo) {
+      const projectLink = `https://ohmika.github.io/${repo.name}/`;
+      const repoLink = repo.html_url;
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.setAttribute("data-name", repo.name.toLowerCase());
+      card.setAttribute("data-desc", (repo.description || "").toLowerCase());
+
+      card.innerHTML = `
+        <div class="card-header">
+          <div class="name">
+            <a href="${projectLink}" target="_blank" rel="noreferrer">${repo.name}</a>
+          </div>
+          <span class="badge live">Live</span>
+        </div>
+        <p class="description">${repo.description || "Geen beschrijving."}</p>
+        <div class="links">
+          <a class="btn primary" href="${projectLink}" target="_blank" rel="noreferrer">▶ Open</a>
+          <a class="btn secondary" href="${repoLink}" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+      `;
+
+      return card;
+    }
+
+    async function loadRepos() {
+      try {
+        loadingEl.style.display = "block";
+
+        const res = await fetch(`https://api.github.com/users/${user}/repos?per_page=100&sort=updated`);
+        if (!res.ok) throw new Error("GitHub API request failed");
+
+        const allRepos = await res.json();
+        const filteredRepos = allRepos.filter(repo => !repo.fork);
+
+        // Check for each repo if it has Pages
+        const reposWithPages = [];
+        for (const repo of filteredRepos) {
+          const hasPages = await checkHasPages(user, repo.name);
+          if (hasPages) {
+            reposWithPages.push(repo);
+          }
+        }
+
+        loadingEl.style.display = "none";
+
+        if (reposWithPages.length === 0) {
+          noPagesEl.textContent = "Geen projecten met GitHub Pages gevonden. Zorg ervoor dat elk project een index.html bestand of docs/ folder heeft.";
+          noPagesEl.classList.remove("hidden");
+          contentEl.innerHTML = "";
+          return;
+        }
+
+        countEl.textContent = reposWithPages.length;
+
+        // Group by category
+        const grouped = {};
+        reposWithPages.forEach(repo => {
+          const cat = getCategoryForRepo(repo.name);
+          if (!grouped[cat]) grouped[cat] = [];
+          grouped[cat].push(repo);
+        });
+
+        contentEl.innerHTML = "";
+
+        // Render categories in order
+        const categoryOrder = ["Converters & Encoders", "Utilities", "Tools", "Specialty", "Media & Visual", "Misc", "Other"];
+        for (const category of categoryOrder) {
+          if (!grouped[category]) continue;
+
+          const catDiv = document.createElement("div");
+          catDiv.className = "category";
+
+          const title = document.createElement("h2");
+          title.className = "category-title";
+          title.textContent = category;
+          catDiv.appendChild(title);
+
+          const grid = document.createElement("div");
+          grid.className = "grid";
+
+          grouped[category]
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .forEach(repo => {
+              grid.appendChild(buildProjectCard(repo));
+            });
+
+          catDiv.appendChild(grid);
+          contentEl.appendChild(catDiv);
+        }
+
+        // Search functionality
+        searchEl.addEventListener("input", (e) => {
+          const query = e.target.value.trim().toLowerCase();
+          const cards = [...contentEl.querySelectorAll(".card")];
+
+          let visibleCount = 0;
+
+          cards.forEach(card => {
+            const name = card.getAttribute("data-name") || "";
+            const desc = card.getAttribute("data-desc") || "";
+            const visible = name.includes(query) || desc.includes(query) || query === "";
+
+            card.style.display = visible ? "" : "none";
+            if (visible) visibleCount++;
+          });
+
+          // Hide categories with no visible cards
+          [...contentEl.querySelectorAll(".category")].forEach(cat => {
+            const visibleCards = [...cat.querySelectorAll(".card")].filter(
+              card => card.style.display !== "none"
+            );
+            cat.style.display = visibleCards.length ? "" : "none";
+          });
+
+          countEl.textContent = visibleCount;
+        });
+      } catch (error) {
+        loadingEl.style.display = "none";
+        errorEl.textContent = `Fout bij laden: ${error.message}`;
+        errorEl.classList.remove("hidden");
+        console.error(error);
+      }
+    }
+
+    loadRepos();
+  </script>
+</body>
+</html>
