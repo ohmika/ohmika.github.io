@@ -164,11 +164,6 @@
       color: var(--accent);
     }
 
-    .badge.offline {
-      background: rgba(210, 153, 34, 0.12);
-      color: var(--accent-warn);
-    }
-
     .description {
       margin: 0 0 14px;
       color: var(--muted);
@@ -255,6 +250,23 @@
     .hidden {
       display: none;
     }
+
+    .refresh-btn {
+      padding: 8px 12px;
+      background: rgba(88, 166, 255, 0.12);
+      color: var(--link);
+      border: 1px solid rgba(88, 166, 255, 0.35);
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.15s ease;
+    }
+
+    .refresh-btn:hover {
+      background: rgba(88, 166, 255, 0.2);
+      border-color: var(--link);
+    }
   </style>
 </head>
 <body>
@@ -267,6 +279,7 @@
       <div class="status-badge">
         <span id="count">—</span> projects
       </div>
+      <button id="refreshBtn" class="refresh-btn" title="Cache vernieuwen">↻ Refresh</button>
     </div>
 
     <div id="error" class="error hidden"></div>
@@ -283,8 +296,11 @@
     const noPagesEl = document.getElementById("noPages");
     const searchEl = document.getElementById("search");
     const countEl = document.getElementById("count");
+    const refreshBtn = document.getElementById("refreshBtn");
 
-    // Categorisering op basis van repo-naam
+    const CACHE_KEY = "ohmika_projects";
+    const CACHE_DURATION = 60 * 60 * 1000; // 1 uur
+
     const categories = {
       "Converters & Encoders": ["64toimg", "base64", "imgto64", "imagecompress"],
       "Utilities": ["cleanlink", "urlopener", "uri", "shortcutdecoder", "eject", "ejectlite"],
@@ -299,6 +315,34 @@
         if (repos.includes(repoName)) return category;
       }
       return "Other";
+    }
+
+    function getCachedData() {
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (!cached) return null;
+
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp > CACHE_DURATION) {
+          localStorage.removeItem(CACHE_KEY);
+          return null;
+        }
+
+        return data;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setCachedData(data) {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          data,
+          timestamp: Date.now()
+        }));
+      } catch (e) {
+        console.warn("Could not cache data", e);
+      }
     }
 
     async function checkHasPages(owner, repo) {
@@ -341,9 +385,93 @@
       return card;
     }
 
-    async function loadRepos() {
+    function renderProjects(reposWithPages) {
+      if (reposWithPages.length === 0) {
+        noPagesEl.textContent = "Geen projecten met GitHub Pages gevonden.";
+        noPagesEl.classList.remove("hidden");
+        contentEl.innerHTML = "";
+        return;
+      }
+
+      noPagesEl.classList.add("hidden");
+      countEl.textContent = reposWithPages.length;
+
+      const grouped = {};
+      reposWithPages.forEach(repo => {
+        const cat = getCategoryForRepo(repo.name);
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(repo);
+      });
+
+      contentEl.innerHTML = "";
+
+      const categoryOrder = ["Converters & Encoders", "Utilities", "Tools", "Specialty", "Media & Visual", "Misc", "Other"];
+      for (const category of categoryOrder) {
+        if (!grouped[category]) continue;
+
+        const catDiv = document.createElement("div");
+        catDiv.className = "category";
+
+        const title = document.createElement("h2");
+        title.className = "category-title";
+        title.textContent = category;
+        catDiv.appendChild(title);
+
+        const grid = document.createElement("div");
+        grid.className = "grid";
+
+        grouped[category]
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .forEach(repo => {
+            grid.appendChild(buildProjectCard(repo));
+          });
+
+        catDiv.appendChild(grid);
+        contentEl.appendChild(catDiv);
+      }
+
+      // Search functionality
+      const handleSearch = (e) => {
+        const query = e.target.value.trim().toLowerCase();
+        const cards = [...contentEl.querySelectorAll(".card")];
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+          const name = card.getAttribute("data-name") || "";
+          const desc = card.getAttribute("data-desc") || "";
+          const visible = name.includes(query) || desc.includes(query) || query === "";
+
+          card.style.display = visible ? "" : "none";
+          if (visible) visibleCount++;
+        });
+
+        [...contentEl.querySelectorAll(".category")].forEach(cat => {
+          const visibleCards = [...cat.querySelectorAll(".card")].filter(
+            card => card.style.display !== "none"
+          );
+          cat.style.display = visibleCards.length ? "" : "none";
+        });
+
+        countEl.textContent = visibleCount;
+      };
+
+      searchEl.oninput = handleSearch;
+    }
+
+    async function loadRepos(skipCache = false) {
       try {
+        if (!skipCache) {
+          const cached = getCachedData();
+          if (cached) {
+            loadingEl.style.display = "none";
+            errorEl.classList.add("hidden");
+            renderProjects(cached);
+            return;
+          }
+        }
+
         loadingEl.style.display = "block";
+        errorEl.classList.add("hidden");
 
         const res = await fetch(`https://api.github.com/users/${user}/repos?per_page=100&sort=updated`);
         if (!res.ok) throw new Error("GitHub API request failed");
@@ -351,7 +479,6 @@
         const allRepos = await res.json();
         const filteredRepos = allRepos.filter(repo => !repo.fork);
 
-        // Check for each repo if it has Pages
         const reposWithPages = [];
         for (const repo of filteredRepos) {
           const hasPages = await checkHasPages(user, repo.name);
@@ -361,78 +488,8 @@
         }
 
         loadingEl.style.display = "none";
-
-        if (reposWithPages.length === 0) {
-          noPagesEl.textContent = "Geen projecten met GitHub Pages gevonden. Zorg ervoor dat elk project een index.html bestand of docs/ folder heeft.";
-          noPagesEl.classList.remove("hidden");
-          contentEl.innerHTML = "";
-          return;
-        }
-
-        countEl.textContent = reposWithPages.length;
-
-        // Group by category
-        const grouped = {};
-        reposWithPages.forEach(repo => {
-          const cat = getCategoryForRepo(repo.name);
-          if (!grouped[cat]) grouped[cat] = [];
-          grouped[cat].push(repo);
-        });
-
-        contentEl.innerHTML = "";
-
-        // Render categories in order
-        const categoryOrder = ["Converters & Encoders", "Utilities", "Tools", "Specialty", "Media & Visual", "Misc", "Other"];
-        for (const category of categoryOrder) {
-          if (!grouped[category]) continue;
-
-          const catDiv = document.createElement("div");
-          catDiv.className = "category";
-
-          const title = document.createElement("h2");
-          title.className = "category-title";
-          title.textContent = category;
-          catDiv.appendChild(title);
-
-          const grid = document.createElement("div");
-          grid.className = "grid";
-
-          grouped[category]
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .forEach(repo => {
-              grid.appendChild(buildProjectCard(repo));
-            });
-
-          catDiv.appendChild(grid);
-          contentEl.appendChild(catDiv);
-        }
-
-        // Search functionality
-        searchEl.addEventListener("input", (e) => {
-          const query = e.target.value.trim().toLowerCase();
-          const cards = [...contentEl.querySelectorAll(".card")];
-
-          let visibleCount = 0;
-
-          cards.forEach(card => {
-            const name = card.getAttribute("data-name") || "";
-            const desc = card.getAttribute("data-desc") || "";
-            const visible = name.includes(query) || desc.includes(query) || query === "";
-
-            card.style.display = visible ? "" : "none";
-            if (visible) visibleCount++;
-          });
-
-          // Hide categories with no visible cards
-          [...contentEl.querySelectorAll(".category")].forEach(cat => {
-            const visibleCards = [...cat.querySelectorAll(".card")].filter(
-              card => card.style.display !== "none"
-            );
-            cat.style.display = visibleCards.length ? "" : "none";
-          });
-
-          countEl.textContent = visibleCount;
-        });
+        setCachedData(reposWithPages);
+        renderProjects(reposWithPages);
       } catch (error) {
         loadingEl.style.display = "none";
         errorEl.textContent = `Fout bij laden: ${error.message}`;
@@ -440,6 +497,10 @@
         console.error(error);
       }
     }
+
+    refreshBtn.addEventListener("click", () => {
+      loadRepos(true);
+    });
 
     loadRepos();
   </script>
